@@ -24,6 +24,13 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      # Récupération des images nécessaires
+      - name: Pull Redis Image
+        run: docker pull redis:5.0-alpine3.10
+
+      - name: Pull PostgreSQL Image
+        run: docker pull postgres:9.4
+
       - name: Build and push Flask app
         uses: docker/build-push-action@v4
         with:
@@ -44,4 +51,3 @@ jobs:
           context: ./worker
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/dotnet-worker:latest
-
