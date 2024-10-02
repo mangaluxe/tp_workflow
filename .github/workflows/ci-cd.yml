@@ -44,3 +44,4 @@ jobs:
           context: ./worker
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/dotnet-worker:latest
+
