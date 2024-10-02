@@ -1,0 +1,120 @@
+# Configurer ce fichier `docker-compose.yml` pour lancer l'ensemble des services.
+
+### **Partie Partie 4 : Base de données non-relationnelle (Redis)**
+# - **Technologie** : Redis
+# - **Image Docker** : `redis:5.0-alpine3.10`
+
+### **Partie 5 : Base de données relationnelle (PostgreSQL)**
+# - **Technologie** : PostgreSQL
+# - **Image Docker** : `postgres:9.4`
+
+### **Partie 6 : Docker Compose**
+
+# Un fichier `docker-compose.yml` sera utilisé pour orchestrer tous les services ensemble. Il permettra de démarrer les applications de vote, de résultat, le worker, ainsi que les bases de données Redis et PostgreSQL.
+
+
+
+services:
+  db:
+    image: postgres:9.4
+    environment:
+      POSTGRES_PASSWORD: formation
+      POSTGRES_DB: workflow_tp
+    restart: always
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - workflow-network
+
+  # PostgreSQL (pgAdmin)
+  pgadmin:
+    depends_on:
+      - db
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: formation
+    ports:
+      - "8081:80"
+    networks:
+      - workflow-network
+
+  # Base de données non-relationnelle Redis
+  redis:
+    image: redis:5.0-alpine3.10
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - workflow-network
+
+  # # phpmyadmin:
+  # phpmyadmin:
+  #   depends_on:
+  #     - db
+  #   image: phpmyadmin
+  #   restart: always
+  #   environment:
+  #     PMA_HOST: db
+  #   ports:
+  #     - "8080:80"
+  #   networks:
+  #     - workflow-network
+
+  # Service pour application Python (vote)
+  webapp:
+    build:
+      context: ./vote  # Répertoire racine contenant le Dockerfile Python
+      dockerfile: Dockerfile  # Dockerfile pour Python
+    ports:
+      - "5000:80"
+    depends_on:
+      - db
+      - redis
+    networks:
+      - workflow-network
+
+  # Service pour application Node.js (result)
+  nodeapp:
+    build:
+      context: ./result  # Répertoire où se trouve le Dockerfile pour Node.js
+      dockerfile: Dockerfile  # Dockerfile pour Node.js
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis
+    networks:
+      - workflow-network
+
+  # Service pour application .NET Core (worker)
+  dotnetapp:
+    build:
+      context: ./worker  # Répertoire où se trouve le Dockerfile pour .NET Core
+      dockerfile: Dockerfile  # Dockerfile pour .NET Core
+    ports:
+      - "8000:80"
+    depends_on:
+      - redis
+    networks:
+      - workflow-network
+
+volumes:
+  db_data:
+  redis_data:
+
+networks:
+  workflow-network:
+
+
+
+
+
+# Démarrer les conteneurs :
+# docker-compose up -d
+
+# Vérifier que les services fonctionnent correctement :
+# docker ps
